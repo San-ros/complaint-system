@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional Grievance Cell</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --ios-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --smooth-fade: cubic-bezier(0.4, 0, 0.2, 1);
+            --ambient-glow: 0 0 16px 1px rgba(245, 158, 11, 0.4);
+            --border-glow: rgba(245, 158, 11, 0.6);
+        }
+
+        .dark {
+            --ambient-glow: 0 0 20px 2px rgba(52, 211, 153, 0.45);
+            --border-glow: rgba(52, 211, 153, 0.7);
+        }
+
+        .toggle-wrapper {
+            position: relative;
+            width: 58px;
+            height: 32px;
+            border-radius: 999px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: var(--ambient-glow);
+            transition: box-shadow 0.5s var(--smooth-fade);
+        }
+
+        .toggle-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: -1.5px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, var(--border-glow), transparent 65%, var(--border-glow));
+            z-index: 0;
+            transition: background 0.5s var(--smooth-fade);
+        }
+
+        .toggle-checkbox { display: none; }
+
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            background-color: #e2e8f0;
+            transition: background-color 0.4s var(--smooth-fade);
+            z-index: 1;
+        }
+
+        .dark .toggle-track {
+            background-color: #10b981;
+        }
+
+        .toggle-thumb {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 26px;
+            height: 26px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.45s var(--ios-spring), width 0.25s var(--smooth-fade);
+            z-index: 2;
+        }
+
+        .toggle-wrapper:active .toggle-thumb {
+            width: 30px;
+        }
+
+        .toggle-checkbox:checked + .toggle-track + .toggle-thumb {
+            transform: translateX(26px);
+        }
+
+        .toggle-wrapper:active .toggle-checkbox:checked + .toggle-track + .toggle-thumb {
+            transform: translateX(22px);
+        }
+
+        .toggle-icon {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            transition: transform 0.45s var(--ios-spring), opacity 0.35s ease;
+        }
+
+        .sun-icon {
+            fill: #f59e0b;
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+        }
+
+        .toggle-checkbox:checked ~ .toggle-thumb .sun-icon {
+            transform: scale(0) rotate(-90deg);
+            opacity: 0;
+        }
+
+        .moon-icon {
+            fill: #059669;
+            transform: scale(0) rotate(90deg);
+            opacity: 0;
+        }
+
+        .toggle-checkbox:checked ~ .toggle-thumb .moon-icon {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-500">
+
+    <div id="initial-modal" class="fixed inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl text-center space-y-6">
+            <div>
+                <span class="inline-block p-3 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 mb-2">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </span>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Institutional Grievance Portal</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Select your access role to proceed</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="selectStudentRole()" class="p-4 border-2 border-slate-200 dark:border-slate-700 hover:border-blue-600 dark:hover:border-blue-500 rounded-xl flex flex-col items-center gap-2 group transition">
+                    <span class="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 7v-6m0 0l7-4m-7 4L5 15"></path>
+                        </svg>
+                    </span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-slate-200">Student</span>
+                    <span class="text-[11px] text-slate-400 leading-tight">Anonymous Reporting</span>
+                </button>
+
+                <button onclick="openDedicatedAuthPage('faculty')" class="p-4 border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-600 dark:hover:border-indigo-500 rounded-xl flex flex-col items-center gap-2 group transition">
+                    <span class="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950 text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </span>
+                    <span class="font-bold text-sm text-slate-800 dark:text-slate-200">Faculty</span>
+                    <span class="text-[11px] text-slate-400 leading-tight">Action Desk</span>
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-400">Institutional Grievance Governance Engine</p>
+        </div>
+    </div>
+
+    <div id="auth-screen" class="fixed inset-0 bg-slate-100 dark:bg-slate-950 z-40 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl w-full max-w-sm shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <span id="auth-avatar" class="inline-flex p-3 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </span>
+                <h2 id="auth-title" class="text-xl font-bold text-slate-900 dark:text-white">Faculty Verification</h2>
+                <p id="auth-subtitle" class="text-xs text-slate-500 dark:text-slate-400">Provide authorization key to access system controls</p>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">Access Password</label>
+                    <input type="password" id="auth-password-input" required placeholder="Enter password..." class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="flex flex-col gap-2 pt-2">
+                    <button type="submit" id="auth-submit-btn" class="w-full py-2.5 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shadow-md">Authenticate</button>
+                    <button type="button" onclick="cancelAuthScreen()" class="w-full py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition">Back to selection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 transition-colors duration-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+            <div class="flex items-center gap-3">
+                <h1 class="font-bold text-lg text-slate-900 dark:text-white tracking-tight">Institutional Grievance Cell</h1>
+                <span id="role-badge" class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Student Mode</span>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <nav id="nav-links" class="flex items-center gap-2"></nav>
+
+                <div class="h-5 w-px bg-slate-200 dark:bg-slate-800"></div>
+
+                <label class="toggle-wrapper" for="theme-toggle" title="Toggle Appearance">
+                    <input type="checkbox" id="theme-toggle" class="toggle-checkbox" onchange="toggleDarkMode(this.checked)">
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb">
+                        <svg class="toggle-icon sun-icon" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="12" y1="21" x2="12" y2="23" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="1" y1="12" x2="3" y2="12" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="21" y1="12" x2="23" y2="12" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <svg class="toggle-icon moon-icon" viewBox="0 0 24 24">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+        <section id="public-dashboard" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+                    <span class="text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold tracking-wider">Total Raised</span>
+                    <p id="metric-total" class="text-3xl font-bold text-slate-900 dark:text-white mt-2">0</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+                    <span class="text-xs uppercase text-amber-600 dark:text-amber-400 font-semibold tracking-wider">In Progress</span>
+                    <p id="metric-progress" class="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-2">0</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+                    <span class="text-xs uppercase text-emerald-600 dark:text-emerald-400 font-semibold tracking-wider">Resolved</span>
+                    <p id="metric-resolved" class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">0</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+                    <span class="text-xs uppercase text-rose-600 dark:text-rose-400 font-semibold tracking-wider">Critical Priority</span>
+                    <p id="metric-critical" class="text-3xl font-bold text-rose-600 dark:text-rose-400 mt-2">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors lg:col-span-1">
+                    <h2 class="font-semibold text-sm mb-4 text-slate-900 dark:text-slate-200">Resolution Status</h2>
+                    <canvas id="statusChart" height="200"></canvas>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors lg:col-span-2">
+                    <h2 class="font-semibold text-sm mb-4 text-slate-900 dark:text-slate-200">Complaint History Timeline</h2>
+                    <canvas id="timelineChart" height="100"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+                <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+                    <h2 class="font-semibold text-slate-900 dark:text-white text-sm">Complaint Registry & Status Track</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                        <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-400 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3">Tracking ID</th>
+                                <th class="px-6 py-3">Issue</th>
+                                <th class="px-6 py-3">Filed On</th>
+                                <th class="px-6 py-3">Priority</th>
+                                <th class="px-6 py-3">Status</th>
+                                <th class="px-6 py-3">Faculty Updates</th>
+                            </tr>
+                        </thead>
+                        <tbody id="public-table-body" class="divide-y divide-slate-200 dark:divide-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="submit-portal" class="max-w-2xl mx-auto bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hidden transition-colors">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-1">Log Anonymous Grievance</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Identities, IP addresses, and metadata are automatically stripped.</p>
+            
+            <form id="grievanceForm" onsubmit="handleStudentSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">Issue Overview</label>
+                    <input type="text" id="stu-title" required placeholder="Short summary of problem" class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">Detailed Description</label>
+                    <textarea id="stu-desc" rows="4" required placeholder="State location, details, specifics..." class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">Problem Persisting Since</label>
+                        <input type="date" id="stu-since" required class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">Priority Classification</label>
+                        <select id="stu-priority" class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">Attach or Capture Photo</label>
+                    <input type="file" accept="image/*" capture="environment" class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-lg p-2 text-sm">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm transition">Submit Anonymously</button>
+            </form>
+        </section>
+
+        <section id="faculty-portal" class="space-y-6 hidden">
+            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Assigned Inquiries (Faculty Review)</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Review verified complaints. Original student statements are read-only and immutable.</p>
+            </div>
+            <div id="faculty-cards" class="grid grid-cols-1 gap-6"></div>
+        </section>
+
+        <section id="admin-portal" class="space-y-6 hidden">
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                <div>
+                    <span class="bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-400 text-xs px-2.5 py-0.5 rounded-full font-mono font-bold">ROOT CONTROL</span>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white mt-1">Central Oversight & Triage Control</h2>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-800 dark:bg-slate-950 text-slate-200 uppercase text-xs">
+                        <tr>
+                            <th class="px-4 py-3">Priority Level</th>
+                            <th class="px-4 py-3">Ticket ID</th>
+                            <th class="px-4 py-3">Complaint Detail</th>
+                            <th class="px-4 py-3">Faculty Status</th>
+                            <th class="px-4 py-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let currentUserRole = null; // 'student' | 'faculty' | 'admin'
+        let pendingAuthRole = null; // 'faculty' | 'admin'
+        let secretKeyBuffer = '';
+
+        let complaints = [
+            {
+                id: "TICK-802",
+                title: "Server Room AC Leak",
+                description: "Condensation leaking directly above Server Rack 3 in the computing annex.",
+                raisedDate: "2026-03-01 09:30",
+                problemSince: "2026-02-28",
+                priority: "Critical",
+                status: "In Progress",
+                facNotes: "Facilities dispatched technician.",
+                actionDate: "2026-03-02 11:15"
+            },
+            {
+                id: "TICK-801",
+                title: "Broken Bench in Lab 4",
+                description: "Wood is split and poses a hazard to students.",
+                raisedDate: "2026-02-25 14:10",
+                problemSince: "2026-02-20",
+                priority: "Low",
+                status: "Resolved",
+                facNotes: "Bench replaced with spare.",
+                actionDate: "2026-02-26 16:40"
+            }
+        ];
+
+        let statusChartInstance = null;
+        let timelineChartInstance = null;
+
+        // KEYSTROKE SEQUENCE DETECTOR: "189265"
+        window.addEventListener('keydown', (e) => {
+            const initialModal = document.getElementById('initial-modal');
+            if (initialModal.classList.contains('hidden')) return;
+
+            if (e.key >= '0' && e.key <= '9') {
+                secretKeyBuffer += e.key;
+                if (secretKeyBuffer.length > 6) {
+                    secretKeyBuffer = secretKeyBuffer.slice(-6);
+                }
+
+                if (secretKeyBuffer === '189265') {
+                    secretKeyBuffer = '';
+                    openDedicatedAuthPage('admin');
+                }
+            }
+        });
+
+        function selectStudentRole() {
+            currentUserRole = 'student';
+            document.getElementById('initial-modal').classList.add('hidden');
+            updateNavigation();
+            switchTab('public-dashboard');
+        }
+
+        function openDedicatedAuthPage(role) {
+            pendingAuthRole = role;
+            document.getElementById('initial-modal').classList.add('hidden');
+            
+            const screen = document.getElementById('auth-screen');
+            const title = document.getElementById('auth-title');
+            const subtitle = document.getElementById('auth-subtitle');
+            const avatar = document.getElementById('auth-avatar');
+            const btn = document.getElementById('auth-submit-btn');
+            const input = document.getElementById('auth-password-input');
+
+            input.value = '';
+
+            if (role === 'faculty') {
+                title.innerText = 'Faculty Authentication';
+                subtitle.innerText = 'Verify faculty access credentials to manage assigned tickets';
+                avatar.className = 'inline-flex p-3 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400';
+                btn.className = 'w-full py-2.5 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shadow-md';
+                input.className = 'w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500';
+            } else if (role === 'admin') {
+                title.innerText = 'Central Oversight Clearance';
+                subtitle.innerText = 'Administrative gate detected. Verification key required.';
+                avatar.className = 'inline-flex p-3 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400';
+                btn.className = 'w-full py-2.5 text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition shadow-md';
+                input.className = 'w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-500';
+            }
+
+            screen.classList.remove('hidden');
+            input.focus();
+        }
+
+        function cancelAuthScreen() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('initial-modal').classList.remove('hidden');
+            pendingAuthRole = null;
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const enteredPass = document.getElementById('auth-password-input').value;
+
+            if (pendingAuthRole === 'faculty') {
+                if (enteredPass === 'faculty@acet.') {
+                    currentUserRole = 'faculty';
+                    finalizeLogin();
+                } else {
+                    alert('Invalid faculty password.');
+                }
+            } else if (pendingAuthRole === 'admin') {
+                if (enteredPass === 'admin@acet') {
+                    currentUserRole = 'admin';
+                    finalizeLogin();
+                } else {
+                    alert('Invalid root clearance password.');
+                }
+            }
+        }
+
+        function finalizeLogin() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('auth-password-input').value = '';
+            pendingAuthRole = null;
+            updateNavigation();
+            // Automatically display the Dashboard after logging in
+            switchTab('public-dashboard');
+        }
+
+        function logout() {
+            currentUserRole = null;
+            document.getElementById('initial-modal').classList.remove('hidden');
+            ['public-dashboard', 'submit-portal', 'faculty-portal', 'admin-portal'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+        }
+
+        function toggleDarkMode(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            updateCharts();
+        }
+
+        function updateNavigation() {
+            const nav = document.getElementById('nav-links');
+            const badge = document.getElementById('role-badge');
+            let linksHtml = '';
+
+            if (currentUserRole === 'student') {
+                badge.innerText = 'Student Mode';
+                badge.className = 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+                linksHtml = `
+                    <button onclick="switchTab('public-dashboard')" class="px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">Live Dashboard</button>
+                    <button onclick="switchTab('submit-portal')" class="px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">File Report</button>
+                    <button onclick="logout()" class="px-3 py-1.5 text-sm font-medium rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition">Switch Role</button>
+                `;
+            } else if (currentUserRole === 'faculty') {
+                badge.innerText = 'Faculty Access';
+                badge.className = 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400';
+                linksHtml = `
+                    <button onclick="switchTab('public-dashboard')" class="px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">Live Dashboard</button>
+                    <button onclick="switchTab('faculty-portal')" class="px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">Faculty Review</button>
+                    <button onclick="logout()" class="px-3 py-1.5 text-sm font-medium rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition">Sign Out</button>
+                `;
+            } else if (currentUserRole === 'admin') {
+                badge.innerText = 'Administrative Root';
+                badge.className = 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-400';
+                linksHtml = `
+                    <button onclick="switchTab('public-dashboard')" class="px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">Live Dashboard</button>
+                    <button onclick="switchTab('admin-portal')" class="px-3 py-1.5 text-sm font-medium rounded-lg bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 dark:hover:bg-slate-700 transition">Admin Panel</button>
+                    <button onclick="logout()" class="px-3 py-1.5 text-sm font-medium rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition">Sign Out</button>
+                `;
+            }
+
+            nav.innerHTML = linksHtml;
+        }
+
+        function switchTab(tabId) {
+            if (tabId === 'submit-portal' && currentUserRole !== 'student') return;
+            if (tabId === 'faculty-portal' && currentUserRole !== 'faculty') return;
+            if (tabId === 'admin-portal' && currentUserRole !== 'admin') return;
+
+            ['public-dashboard', 'submit-portal', 'faculty-portal', 'admin-portal'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+
+            if (tabId === 'public-dashboard') renderDashboard();
+            if (tabId === 'faculty-portal') renderFacultyPortal();
+            if (tabId === 'admin-portal') renderAdminPortal();
+        }
+https://xnxvrqfureprusrdhhmv.supabase.com
+sb_publishable_5mntgftANHjM-GevZq9r8w_BYDqO-lC
+        function handleStudentSubmit(e) {
+            e.preventDefault();
+            complaints.unshift({
+                id: "TICK-" + Math.floor(100 + Math.random() * 900),
+                title: document.getElementById('stu-title').value,
+                description: document.getElementById('stu-desc').value,
+                problemSince: document.getElementById('stu-since').value,
+                priority: document.getElementById('stu-priority').value,
+                raisedDate: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                status: "Raised",
+                facNotes: "Pending Faculty Assignment",
+                actionDate: null
+            });
+            document.getElementById('grievanceForm').reset();
+            switchTab('public-dashboard');
+        }
+
+        function updateFacultyAction(id) {
+            const ticket = complaints.find(c => c.id === id);
+            if (!ticket) return;
+
+            ticket.status = document.getElementById(`fac-status-${id}`).value;
+            ticket.facNotes = document.getElementById(`fac-notes-${id}`).value;
+            ticket.actionDate = new Date().toISOString().slice(0, 16).replace('T', ' ');
+            renderFacultyPortal();
+        }
+
+        function adminDeleteTicket(id) {
+            complaints = complaints.filter(c => c.id !== id);
+            renderAdminPortal();
+        }
+
+        function getPriorityWeight(p) {
+            return { Critical: 4, High: 3, Medium: 2, Low: 1 }[p] || 0;
+        }
+
+        function renderDashboard() {
+            document.getElementById('metric-total').innerText = complaints.length;
+            document.getElementById('metric-progress').innerText = complaints.filter(c => c.status === 'In Progress' || c.status === 'Raised').length;
+            document.getElementById('metric-resolved').innerText = complaints.filter(c => c.status === 'Resolved').length;
+            document.getElementById('metric-critical').innerText = complaints.filter(c => c.priority === 'Critical').length;
+
+            const tbody = document.getElementById('public-table-body');
+            tbody.innerHTML = complaints.map(c => `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-6 py-4 font-mono font-bold text-xs text-blue-600 dark:text-blue-400">${c.id}</td>
+                    <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">${c.title}</td>
+                    <td class="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">${c.raisedDate}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            c.priority === 'Critical' ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300' :
+                            c.priority === 'High' ? 'bg-orange-100 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300' :
+                            c.priority === 'Medium' ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }">${c.priority}</span>
+                    </td>
+                    <td class="px-6 py-4 text-xs font-semibold ${c.status === 'Resolved' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">${c.status}</td>
+                    <td class="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">${c.facNotes}</td>
+                </tr>
+            `).join('');
+
+            updateCharts();
+        }
+
+        function renderFacultyPortal() {
+            const container = document.getElementById('faculty-cards');
+            container.innerHTML = complaints.map(c => `
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors">
+                    <div class="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <div>
+                            <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">${c.id}</span>
+                            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mt-1">${c.title}</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Problem Since: ${c.problemSince} | Logged: ${c.raisedDate}</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            c.priority === 'Critical' ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }">${c.priority}</span>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-200/80 dark:border-slate-800">
+                        <p class="text-xs font-semibold uppercase text-slate-400 dark:text-slate-500 mb-1">Student Description (Immutable)</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">${c.description}</p>
+                    </div>
+
+                    <div class="space-y-3 pt-2">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">Progress / Action Taken</label>
+                            <textarea id="fac-notes-${c.id}" rows="2" class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">${c.facNotes === 'Pending Faculty Assignment' ? '' : c.facNotes}</textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">Update Status</label>
+                                <select id="fac-status-${c.id}" class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="Raised" ${c.status === 'Raised' ? 'selected' : ''}>Raised</option>
+                                    <option value="In Progress" ${c.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="Resolved" ${c.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1">Resolution Attachment</label>
+                                <input type="file" accept="image/*" capture="environment" class="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded-lg p-1.5 text-sm">
+                            </div>
+                        </div>
+                        <button onclick="updateFacultyAction('${c.id}')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition">Save Action Log</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAdminPortal() {
+            const sorted = [...complaints].sort((a,b) => getPriorityWeight(b.priority) - getPriorityWeight(a.priority));
+            const tbody = document.getElementById('admin-table-body');
+            tbody.innerHTML = sorted.map(c => `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-4 py-3">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            c.priority === 'Critical' ? 'bg-rose-600 text-white' :
+                            c.priority === 'High' ? 'bg-orange-500 text-white' :
+                            c.priority === 'Medium' ? 'bg-amber-400 text-slate-900' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        }">${c.priority}</span>
+                    </td>
+                    <td class="px-4 py-3 font-mono text-xs font-bold text-slate-900 dark:text-slate-100">${c.id}</td>
+                    <td class="px-4 py-3">
+                        <p class="font-semibold text-slate-900 dark:text-slate-100">${c.title}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">${c.description}</p>
+                    </td>
+                    <td class="px-4 py-3 text-xs">
+                        <span class="font-semibold text-slate-900 dark:text-slate-200">${c.status}</span>
+                        <div class="text-slate-400 dark:text-slate-500 text-[11px]">${c.actionDate || 'No action recorded'}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <button onclick="adminDeleteTicket('${c.id}')" class="px-3 py-1 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 rounded-lg text-xs hover:bg-rose-100 dark:hover:bg-rose-900 transition font-semibold">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+            const raised = complaints.filter(c => c.status === 'Raised').length;
+            const progress = complaints.filter(c => c.status === 'In Progress').length;
+            const resolved = complaints.filter(c => c.status === 'Resolved').length;
+
+            if (statusChartInstance) statusChartInstance.destroy();
+            if (timelineChartInstance) timelineChartInstance.destroy();
+
+            const ctxStatus = document.getElementById('statusChart').getContext('2d');
+            statusChartInstance = new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Raised', 'In Progress', 'Resolved'],
+                    datasets: [{
+                        data: [raised, progress, resolved],
+                        backgroundColor: ['#64748b', '#f59e0b', '#10b981'],
+                        borderColor: isDark ? '#0f172a' : '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: textColor }
+                        } 
+                    } 
+                }
+            });
+
+            const ctxTimeline = document.getElementById('timelineChart').getContext('2d');
+            timelineChartInstance = new Chart(ctxTimeline, {
+                type: 'line',
+                data: {
+                    labels: complaints.map(c => c.raisedDate).reverse(),
+                    datasets: [{
+                        label: 'Logged Complaints',
+                        data: complaints.map((_, i) => i + 1),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.35,
+                        fill: true
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: { 
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: textColor } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
