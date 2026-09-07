@@ -536,6 +536,7 @@
         }
 const SUPABASE_URL = 'https://xnxvrqfureprusrdhhmv.supabase.com'
 const SUPABASE_ANON_KEY = 'sb_publishable_5mntgftANHjM-GevZq9r8w_BYDqO-lC'
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         function handleStudentSubmit(e) {
             e.preventDefault();
             complaints.unshift({
