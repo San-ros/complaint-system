@@ -345,6 +345,11 @@
     </main>
 
     <script>
+        const SUPABASE_URL = 'https://xnxvrqfureprusrdhhmv.supabase.co'
+        const SUPABASE_ANON_KEY = 'sb_publishable_5mntgftANHjM-GevZq9r8w_BYDqO-lC'
+        const clientProvider = window.supabase || window.Supabase;
+        const db = clientProvider.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
         let currentUserRole = null; // 'student' | 'faculty' | 'admin'
         let pendingAuthRole = null; // 'faculty' | 'admin'
         let secretKeyBuffer = '';
@@ -535,10 +540,7 @@
             if (tabId === 'faculty-portal') renderFacultyPortal();
             if (tabId === 'admin-portal') renderAdminPortal();
         }
-const SUPABASE_URL = 'https://xnxvrqfureprusrdhhmv.supabase.co'
-const SUPABASE_ANON_KEY = 'sb_publishable_5mntgftANHjM-GevZq9r8w_BYDqO-lC'
-const clientProvider = window.supabase || window.Supabase;
-const db = clientProvider.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         function handleStudentSubmit(e) {
             e.preventDefault();
             complaints.unshift({
